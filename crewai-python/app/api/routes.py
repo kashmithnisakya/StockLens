@@ -1,11 +1,16 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from typing import Optional, Dict
 from datetime import datetime
 import logging
-from crew import StockAnalysisCrew
-from config import SystemConfig
+from app.services.crew import StockAnalysisCrew
+from app.core.config import SystemConfig
+from app.models.schemas import (
+    AnalysisRequest,
+    AnalysisResponse,
+    BatchAnalysisRequest,
+    BatchAnalysisResponse,
+    HealthResponse
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -26,48 +31,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Request/Response Models
-class AnalysisRequest(BaseModel):
-    ticker: str = Field(..., description="Stock ticker symbol (e.g., AAPL, GOOGL)")
-    depth: str = Field(default="comprehensive", description="Analysis depth: basic, standard, comprehensive")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "ticker": "AAPL",
-                "depth": "comprehensive"
-            }
-        }
-
-class AnalysisResponse(BaseModel):
-    ticker: str
-    analysis: str
-    timestamp: str
-    depth: str
-    status: str = "completed"
-
-class BatchAnalysisRequest(BaseModel):
-    tickers: list[str] = Field(..., description="List of stock ticker symbols")
-    depth: str = Field(default="comprehensive", description="Analysis depth")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "tickers": ["AAPL", "GOOGL", "MSFT"],
-                "depth": "comprehensive"
-            }
-        }
-
-class BatchAnalysisResponse(BaseModel):
-    results: Dict[str, str]
-    timestamp: str
-    status: str = "completed"
-
-class HealthResponse(BaseModel):
-    status: str
-    timestamp: str
-    version: str
 
 # Initialize crew
 crew = None
@@ -102,7 +65,7 @@ async def health_check():
         "version": "1.0.0"
     }
 
-@app.post("/analyze", response_model=AnalysisResponse)
+@app.post("/api/v1/analyze", response_model=AnalysisResponse)
 async def analyze_stock(request: AnalysisRequest):
     """
     Analyze a single stock
@@ -131,7 +94,7 @@ async def analyze_stock(request: AnalysisRequest):
         logger.error(f"Analysis failed for {request.ticker}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
-@app.post("/analyze/batch", response_model=BatchAnalysisResponse)
+@app.post("/api/v1/analyze/batch", response_model=BatchAnalysisResponse)
 async def analyze_batch(request: BatchAnalysisRequest):
     """
     Analyze multiple stocks
@@ -158,7 +121,7 @@ async def analyze_batch(request: BatchAnalysisRequest):
         logger.error(f"Batch analysis failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Batch analysis failed: {str(e)}")
 
-@app.get("/analyze/{ticker}", response_model=AnalysisResponse)
+@app.get("/api/v1/analyze/{ticker}", response_model=AnalysisResponse)
 async def analyze_stock_get(ticker: str, depth: str = "comprehensive"):
     """
     Analyze a stock using GET method
@@ -168,7 +131,3 @@ async def analyze_stock_get(ticker: str, depth: str = "comprehensive"):
     """
     request = AnalysisRequest(ticker=ticker, depth=depth)
     return await analyze_stock(request)
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

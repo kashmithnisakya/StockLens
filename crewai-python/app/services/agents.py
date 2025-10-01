@@ -1,7 +1,7 @@
 from crewai import Agent
-from crewai_tools import SerperDevTool, ScrapeWebsiteTool
+from crewai_tools import SerperDevTool
 from langchain_openai import ChatOpenAI
-from config import SystemConfig
+from app.core.config import SystemConfig
 
 class StockAnalysisAgents:
     """Factory class for creating specialized agents"""
@@ -16,7 +16,7 @@ class StockAnalysisAgents:
         # Create agents once and reuse them
         self._analyst = None
         self._strategist = None
-    
+
     def analyst(self) -> Agent:
         """Create comprehensive stock analyst"""
         if self._analyst is None:

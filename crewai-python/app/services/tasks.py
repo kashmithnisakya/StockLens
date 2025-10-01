@@ -1,7 +1,7 @@
 from crewai import Task
 from typing import List
-from agents import StockAnalysisAgents
-from config import StockAnalysisConfig
+from app.services.agents import StockAnalysisAgents
+from app.models.schemas import StockAnalysisConfig
 
 class StockAnalysisTasks:
     """Factory class for creating analysis tasks"""
