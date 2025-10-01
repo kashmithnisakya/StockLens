@@ -58,7 +58,8 @@ class StockAnalysisCrew:
             print("Analysis Complete!")
             print(f"{'='*80}\n")
 
-            return result
+            # Extract the raw string output from CrewOutput
+            return result.raw if hasattr(result, 'raw') else str(result)
 
         except Exception as e:
             print(f"Error during analysis: {str(e)}")

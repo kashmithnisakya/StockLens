@@ -132,7 +132,3 @@ pytest
 # Format code
 black app/
 ```
-
-## 📝 License
-
-MIT
