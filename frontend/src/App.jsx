@@ -41,63 +41,68 @@ function App() {
 
   return (
     <div className="app">
-      <h1>StockLens - Stock Analysis</h1>
+      <header className="app-header">
+        <h1>StockLens</h1>
+      </header>
 
-      <div className="input-section">
-        <div className="input-group">
-          <label htmlFor="ticker">Stock Ticker:</label>
-          <input
-            id="ticker"
-            type="text"
-            value={ticker}
-            onChange={(e) => setTicker(e.target.value.toUpperCase())}
-            placeholder="Enter ticker (e.g., AAPL)"
-          />
-        </div>
-
-        <div className="input-group">
-          <label htmlFor="depth">Analysis Depth:</label>
-          <select
-            id="depth"
-            value={depth}
-            onChange={(e) => setDepth(e.target.value)}
-          >
-            <option value="quick">Quick</option>
-            <option value="comprehensive">Comprehensive</option>
-          </select>
-        </div>
-
-        <button
-          onClick={analyzeStock}
-          disabled={loading || !ticker}
-          className="analyze-button"
-        >
-          {loading ? 'Analyzing...' : 'Analyze Stock'}
-        </button>
-      </div>
-
-      {error && (
-        <div className="error">
-          <strong>Error:</strong> {error}
-        </div>
-      )}
-
-      {analysis && (
-        <div className="analysis-result">
-          <h2>Analysis for {analysis.ticker}</h2>
-          <div className="metadata">
-            <p><strong>Status:</strong> {analysis.status}</p>
-            <p><strong>Depth:</strong> {analysis.depth}</p>
-            <p><strong>Timestamp:</strong> {new Date(analysis.timestamp).toLocaleString()}</p>
+      <div className="app-container">
+        <div className="input-section">
+          <div className="input-group">
+            <label htmlFor="ticker">Stock Ticker</label>
+            <input
+              id="ticker"
+              type="text"
+              value={ticker}
+              onChange={(e) => setTicker(e.target.value.toUpperCase())}
+              placeholder="Enter ticker (e.g., AAPL)"
+              autoComplete="off"
+            />
           </div>
-          <div className="analysis-content">
-            <h3>Analysis Report</h3>
-            <div className="markdown-content">
-              <ReactMarkdown>{analysis.analysis}</ReactMarkdown>
+
+          <div className="input-group">
+            <label htmlFor="depth">Analysis Depth</label>
+            <select
+              id="depth"
+              value={depth}
+              onChange={(e) => setDepth(e.target.value)}
+            >
+              <option value="quick">Quick Analysis</option>
+              <option value="comprehensive">Comprehensive Analysis</option>
+            </select>
+          </div>
+
+          <button
+            onClick={analyzeStock}
+            disabled={loading || !ticker}
+            className="analyze-button"
+          >
+            {loading ? 'Analyzing...' : 'Analyze Stock'}
+          </button>
+        </div>
+
+        {error && (
+          <div className="error">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {analysis && (
+          <div className="analysis-result">
+            <h2>Analysis for {analysis.ticker}</h2>
+            <div className="metadata">
+              <p><strong>Status</strong> {analysis.status}</p>
+              <p><strong>Depth</strong> {analysis.depth}</p>
+              <p><strong>Timestamp</strong> {new Date(analysis.timestamp).toLocaleString()}</p>
+            </div>
+            <div className="analysis-content">
+              <h3>Investment Analysis</h3>
+              <div className="markdown-content">
+                <ReactMarkdown>{analysis.analysis}</ReactMarkdown>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
