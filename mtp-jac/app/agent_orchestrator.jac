@@ -4,7 +4,7 @@ import from nodes {
     master_agent, stock_analyst, investment_strategist,
     market_researcher, AnalysisDepth
 }
-import from fastapi { HTTPException, Status }
+import from fastapi { HTTPException, status }
 import from jac_cloud.jaseci.utils.logger { logger }
 
 
