@@ -1,5 +1,6 @@
 import from ai_core { research_stock, analyze_stock, provide_recommendation }
 import from jac_cloud.jaseci.utils.logger { logger }
+import from serper_client { serper_client }
 
 
 # Enum for agent types
@@ -7,6 +8,13 @@ enum AgentType {
     ANALYST = "analyst",
     STRATEGIST = "strategist",
     RESEARCHER = "researcher"
+}
+
+enum Status {
+    PENDING = "pending",
+    IN_PROGRESS = "in_progress",
+    COMPLETED = "completed",
+    FAILED = "failed"
 }
 
 enum AnalysisDepth {
@@ -18,11 +26,12 @@ enum AnalysisDepth {
 # Master node that coordinates all agents
 node master_agent {
     has ticker: str = "";
-    has depth: AnalysisDepth = AnalysisDepth.COMPREHENSIVE;
-    has status: str = "initialized";
-    has knowledge_base: dict = {};
+    has status: Status = Status.IN_PROGRESS;
+    has depth: AnalysisDepth = AnalysisDepth.QUICK;
+    has sequence: list = [];
+    has max_executions: int = 10;
+    has knowledge_base: dict = [];
     has final_analysis: dict = {};
-    has timestamp: str = "";
 }
 
 # Market Researcher Agent Node
@@ -32,9 +41,52 @@ node market_researcher {
     has goal: str = "Gather current market data and news";
     has research_data: dict = {};
     has status: str = "pending";
+    has ticker: str = "";
 
     def execute() {
-        logger.debug("Not implemented yet");
+        logger.debug(f"nodes | market_researcher | execute | Starting research for {self.ticker}");
+
+        # Get ticker from master agent
+        master = <--[0](`?master_agent);
+        if master {
+            self.ticker = master.ticker;
+        }
+
+        if not self.ticker {
+            logger.error("nodes | market_researcher | execute | No ticker found");
+            return {
+                "status": "error",
+                "message": "No ticker provided"
+            };
+        }
+
+        # Fetch news using SERPER
+        logger.debug(f"nodes | market_researcher | execute | Fetching news for {self.ticker}");
+        news_result = serper_client.search_stock_news(self.ticker, num_results=10);
+
+        # Fetch market trends
+        logger.debug(f"nodes | market_researcher | execute | Fetching market trends for {self.ticker}");
+        trends_result = serper_client.search_market_trends(self.ticker, num_results=5);
+
+        # Fetch competitor information
+        logger.debug(f"nodes | market_researcher | execute | Fetching competitor info for {self.ticker}");
+        competitor_result = serper_client.search_competitor_info(self.ticker, num_results=5);
+
+        # Compile research data
+        self.research_data = {
+            "ticker": self.ticker,
+            "news": news_result.get("news", []),
+            "trends": trends_result.get("trends", []),
+            "competitors": competitor_result.get("competitors", []),
+            "news_count": news_result.get("count", 0),
+            "trends_count": trends_result.get("count", 0),
+            "competitors_count": competitor_result.get("count", 0)
+        };
+
+        self.status = "completed";
+        logger.debug(f"nodes | market_researcher | execute | Research completed for {self.ticker}");
+
+        return self.research_data;
     }
 }
 
@@ -48,6 +100,7 @@ node stock_analyst {
 
     def execute() {
         logger.debug("Not implemented yet");
+        return "plan";
     }
 }
 
@@ -62,6 +115,7 @@ node investment_strategist {
 
     def execute() {
         logger.debug("Not implemented yet");
+        return "strategy_plan";
     }
 }
 
@@ -86,3 +140,9 @@ node task {
     has status: str = "pending";
     has priority: int = 1;
 }
+
+glob agents = {
+    AgentType.RESEARCHER.value: market_researcher,
+    AgentType.ANALYST.value: stock_analyst,
+    AgentType.STRATEGIST.value: investment_strategist
+};

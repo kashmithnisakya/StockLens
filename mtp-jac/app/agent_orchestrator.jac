@@ -2,7 +2,7 @@ import from datetime { datetime }
 import from typing { Dict, List, Any }
 import from nodes {
     master_agent, stock_analyst, investment_strategist,
-    market_researcher, AnalysisDepth
+    market_researcher, Status, AnalysisDepth, agents, AgentType
 }
 import from fastapi { HTTPException, status }
 import from jac_cloud.jaseci.utils.logger { logger }
@@ -11,7 +11,12 @@ import from jac_cloud.jaseci.utils.logger { logger }
 # Walker to initialize the analysis system
 walker init_analysis {
     has ticker: str;
-    has depth: AnalysisDepth = AnalysisDepth.COMPREHENSIVE;
+    has depth: AnalysisDepth = AnalysisDepth.QUICK;
+
+    class __specs__ {
+        has tags: list = ["stock"];
+        has auth: bool = False;
+    }
 
     can init_master with `root entry {
         visit [-->](`?master_agent) else {
@@ -24,9 +29,8 @@ walker init_analysis {
     can init_system with master_agent entry {
         # Set up master agent
         here.ticker = self.ticker;
+        here.status = Status.IN_PROGRESS;
         here.depth = self.depth;
-        here.status = "initializing";
-        here.timestamp = datetime.now().isoformat();
 
         # Create agent nodes
         if not [-->](`?market_researcher) {
@@ -41,20 +45,55 @@ walker init_analysis {
             logger.debug("agent_orchestrator | init_analysis | Creating Investment Strategist agent node");
             here ++> investment_strategist();
         }
+
+
+        if here.depth.value == AnalysisDepth.QUICK.value {
+            logger.debug("agent_orchestrator | init_analysis | Quick analysis selected");
+            here.sequence = [AgentType.RESEARCHER.value, AgentType.ANALYST.value, AgentType.STRATEGIST.value];
+        } elif here.depth.value == AnalysisDepth.STANDARD.value {
+            logger.debug("agent_orchestrator | init_analysis | Standard analysis selected");
+            logger.debug("Not implemented yet");
+        } else {
+            logger.debug("agent_orchestrator | init_analysis | Comprehensive analysis selected");
+            logger.debug("Not implemented yet");
+        }
     }
 }
 
-walker orchestrate_analysis {
+walker orchestrator {
     has ticker: str;
-    has depth: str = "comprehensive";
     has result: Dict[str, Any] = {};
+    has depth: AnalysisDepth = AnalysisDepth.QUICK;
+
+    class __specs__ {
+        has tags: list = ["stock"];
+        has auth: bool = False;
+    }
 
     can start_orchestration with `root entry {
-        logger.debug("agent_orchestrator | orchestrate_analysis | orchestration start for {self.ticker} at depth {self.depth}");
+        logger.debug(f"agent_orchestrator | orchestrate_analysis | orchestration start for {self.ticker} at depth {self.depth}");
         here spawn init_analysis(ticker=self.ticker, depth=self.depth);
+        visit [-->](`?master_agent) else {
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Master agent node not found after initialization."
+            );
+        };
     }
 
     can run_orchestration with master_agent entry {
-        print("Not yet implemented");
+        logger.debug(f"agent_orchestrator | orchestrate_analysis | running orchestration for {self.ticker}");
+
+        for agent_name in here.sequence {
+            logger.debug(f"agent_orchestrator | orchestrate_analysis | executing agent: {agent_name}");
+            agent_node = [-->] (`?agents[agent_name]);
+            agent_result = agent_node[0].execute();
+            here.knowledge_base.append({
+                "agent": agent_name,
+                "result": agent_result,
+                "timestamp": datetime.now().isoformat()
+            });
+        }
+        logger.debug(f"knowledge_base: {here.knowledge_base}");
     }
 }
