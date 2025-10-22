@@ -3,37 +3,6 @@ import from byllm { Model }
 # Global LLM instance
 glob llm = Model(model_name="gpt-4.1");
 
-class MarketData {
-    has price: float = 0.0;
-    has volume: int = 0;
-    has market_cap: float = 0.0;
-    has pe_ratio: float = 0.0;
-    has dividend_yield: float = 0.0;
-}
-
-class MarketResearcherOutput {
-    has market_data: MarketData = MarketData();
-    has news: list = [];
-    has industry_trends: list = [];
-    has competitors: list = [];
-}
-
-"""
-Research the stock {self.ticker} and gather the following information:
-1. Current market data (price, volume, market cap)
-2. Recent news and developments
-3. Industry trends
-4. Competitor analysis
-
-Provide a comprehensive summary in JSON format with keys:
-- market_data
-- news
-- industry_trends
-- competitors
-"""
-def research_stock() -> MarketResearcherOutput by llm();
-
-
 class StockAnalysis {
     has fundamentals: dict = {};
     has technicals: dict = {};
@@ -59,7 +28,7 @@ Return your analysis in a structured format with sections:
 - sentiment
 - summary
 """
-def analyze_stock() -> StockAnalysis by llm();
+def analyze_stock(knowledge_base: dict) -> StockAnalysis by llm();
 
 # Enum for recommendation types
 enum Recommendation {

@@ -1,35 +1,29 @@
 import from os { getenv }
 import from typing { Dict, List, Any }
 import from jac_cloud.jaseci.utils.logger { logger }
+import from requests { post }
 
 
-class SerperConfig {
+obj SerperConfig {
     has api_key: str = "";
     has base_url: str = "https://google.serper.dev";
     has search_endpoint: str = "/search";
     has news_endpoint: str = "/news";
 
-    def __init__() {
+    def postinit() {
         self.api_key = getenv("SERPER_API_KEY", "");
         if not self.api_key {
-            logger.warning("SERPER_API_KEY not found in environment variables");
+            logger.warning("serper_client | SerperConfig | SERPER_API_KEY not found in environment variables");
         }
     }
 }
 
-class SerperClient {
+obj SerperClient {
     has config: SerperConfig;
 
-    def __init__() {
-        self.config = SerperConfig();
-    }
-
     def search_stock_news(ticker: str, num_results: int = 10) -> Dict[str, Any] {
-        """Search for recent news about a stock using SERPER API"""
-        import from requests { post }
-
         if not self.config.api_key {
-            logger.error("SERPER API key not configured");
+            logger.error("serper_client |  search_stock_news | SERPER API key not configured");
             return {
                 "status": "error",
                 "message": "SERPER API key not configured",
@@ -92,11 +86,8 @@ class SerperClient {
     }
 
     def search_market_trends(ticker: str, num_results: int = 5) -> Dict[str, Any] {
-        """Search for market trends and analysis for a stock"""
-        import from requests { post }
-
         if not self.config.api_key {
-            logger.error("SERPER API key not configured");
+            logger.error("serper_client | search_market_trends | SERPER API key not configured");
             return {
                 "status": "error",
                 "message": "SERPER API key not configured",
@@ -156,11 +147,8 @@ class SerperClient {
     }
 
     def search_competitor_info(ticker: str, industry: str = "", num_results: int = 5) -> Dict[str, Any] {
-        """Search for competitor information"""
-        import from requests { post }
-
         if not self.config.api_key {
-            logger.error("SERPER API key not configured");
+            logger.error("serper_client | search_competitor_info | SERPER API key not configured");
             return {
                 "status": "error",
                 "message": "SERPER API key not configured",
@@ -222,5 +210,6 @@ class SerperClient {
     }
 }
 
-# Global SERPER client instance
-glob serper_client = SerperClient();
+glob serper_client = SerperClient(
+    config=SerperConfig()
+);

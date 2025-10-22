@@ -2,7 +2,7 @@ import from datetime { datetime }
 import from typing { Dict, List, Any }
 import from nodes {
     master_agent, stock_analyst, investment_strategist,
-    market_researcher, Status, AnalysisDepth, agents, AgentType
+    market_researcher, Status, AnalysisDepth, agents, AgentRole
 }
 import from fastapi { HTTPException, status }
 import from jac_cloud.jaseci.utils.logger { logger }
@@ -35,7 +35,9 @@ walker init_analysis {
         # Create agent nodes
         if not [-->](`?market_researcher) {
             logger.debug("agent_orchestrator | init_analysis | Creating Market Researcher agent node");
-            here ++> market_researcher();
+            here ++> market_researcher(
+                ticker=self.ticker
+            );
         } 
         if not [-->](`?stock_analyst) {
             logger.debug("agent_orchestrator | init_analysis | Creating Stock Analyst agent node");
@@ -46,10 +48,9 @@ walker init_analysis {
             here ++> investment_strategist();
         }
 
-
         if here.depth.value == AnalysisDepth.QUICK.value {
             logger.debug("agent_orchestrator | init_analysis | Quick analysis selected");
-            here.sequence = [AgentType.RESEARCHER.value, AgentType.ANALYST.value, AgentType.STRATEGIST.value];
+            here.sequence = [AgentRole.MARKET_RESEARCHER.value, AgentRole.STOCK_ANALYST.value, AgentRole.INVESTMENT_STRATEGIST.value];
         } elif here.depth.value == AnalysisDepth.STANDARD.value {
             logger.debug("agent_orchestrator | init_analysis | Standard analysis selected");
             logger.debug("Not implemented yet");

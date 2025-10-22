@@ -3,11 +3,10 @@ import from jac_cloud.jaseci.utils.logger { logger }
 import from serper_client { serper_client }
 
 
-# Enum for agent types
-enum AgentType {
-    ANALYST = "analyst",
-    STRATEGIST = "strategist",
-    RESEARCHER = "researcher"
+enum AgentRole {
+    STOCK_ANALYST = "stock_analyst",
+    INVESTMENT_STRATEGIST = "investment_strategist",
+    MARKET_RESEARCHER = "market_researcher"
 }
 
 enum Status {
@@ -23,7 +22,6 @@ enum AnalysisDepth {
     COMPREHENSIVE = "comprehensive"
 }
 
-# Master node that coordinates all agents
 node master_agent {
     has ticker: str = "";
     has status: Status = Status.IN_PROGRESS;
@@ -34,31 +32,15 @@ node master_agent {
     has final_analysis: dict = {};
 }
 
-# Market Researcher Agent Node
 node market_researcher {
-    has agent_type: AgentType = AgentType.RESEARCHER;
-    has role: str = "Market Researcher";
+    has agent_role: AgentRole = AgentRole.MARKET_RESEARCHER;
     has goal: str = "Gather current market data and news";
     has research_data: dict = {};
-    has status: str = "pending";
+    has status: Status = Status.PENDING;
     has ticker: str = "";
 
     def execute() {
         logger.debug(f"nodes | market_researcher | execute | Starting research for {self.ticker}");
-
-        # Get ticker from master agent
-        master = <--[0](`?master_agent);
-        if master {
-            self.ticker = master.ticker;
-        }
-
-        if not self.ticker {
-            logger.error("nodes | market_researcher | execute | No ticker found");
-            return {
-                "status": "error",
-                "message": "No ticker provided"
-            };
-        }
 
         # Fetch news using SERPER
         logger.debug(f"nodes | market_researcher | execute | Fetching news for {self.ticker}");
@@ -83,7 +65,7 @@ node market_researcher {
             "competitors_count": competitor_result.get("count", 0)
         };
 
-        self.status = "completed";
+        self.status = Status.COMPLETED;
         logger.debug(f"nodes | market_researcher | execute | Research completed for {self.ticker}");
 
         return self.research_data;
@@ -92,11 +74,10 @@ node market_researcher {
 
 # Stock Analyst Agent Node
 node stock_analyst {
-    has agent_type: AgentType = AgentType.ANALYST;
-    has role: str = "Stock Analyst";
+    has agent_role: AgentRole = AgentRole.STOCK_ANALYST;
     has goal: str = "Analyze stock fundamentals, technicals, and sentiment";
     has analysis_result: dict = {};
-    has status: str = "pending";
+    has status: Status = Status.PENDING;
 
     def execute() {
         logger.debug("Not implemented yet");
@@ -106,12 +87,11 @@ node stock_analyst {
 
 # Investment Strategist Agent Node
 node investment_strategist {
-    has agent_type: AgentType = AgentType.STRATEGIST;
-    has role: str = "Investment Strategist";
+    has agent_role: AgentRole = AgentRole.INVESTMENT_STRATEGIST;
     has goal: str = "Provide investment recommendation based on analysis";
     has recommendation: str = "";
     has reasoning: str = "";
-    has status: str = "pending";
+    has status: Status = Status.PENDING;
 
     def execute() {
         logger.debug("Not implemented yet");
@@ -119,30 +99,30 @@ node investment_strategist {
     }
 }
 
-# Result node to store final output
-node analysis_result {
-    has ticker: str;
-    has timestamp: str;
-    has recommendation: str;
-    has confidence_score: float = 0.0;
-    has analysis_summary: str = "";
-    has key_metrics: dict = {};
-    has risks: list = [];
-    has opportunities: list = [];
-}
+# # Result node to store final output
+# node analysis_result {
+#     has ticker: str;
+#     has timestamp: str;
+#     has recommendation: str;
+#     has confidence_score: float = 0.0;
+#     has analysis_summary: str = "";
+#     has key_metrics: dict = {};
+#     has risks: list = [];
+#     has opportunities: list = [];
+# }
 
-# Task node for individual tasks
-node task {
-    has task_name: str;
-    has description: str;
-    has assigned_to: str;
-    has result: str = "";
-    has status: str = "pending";
-    has priority: int = 1;
-}
+# # Task node for individual tasks
+# node task {
+#     has task_name: str;
+#     has description: str;
+#     has assigned_to: str;
+#     has result: str = "";
+#     has status: str = "pending";
+#     has priority: int = 1;
+# }
 
 glob agents = {
-    AgentType.RESEARCHER.value: market_researcher,
-    AgentType.ANALYST.value: stock_analyst,
-    AgentType.STRATEGIST.value: investment_strategist
+    AgentRole.MARKET_RESEARCHER.value: market_researcher,
+    AgentRole.STOCK_ANALYST.value: stock_analyst,
+    AgentRole.INVESTMENT_STRATEGIST.value: investment_strategist
 };
