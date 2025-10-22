@@ -1,7 +1,7 @@
 import from byllm { Model }
 
 # Global LLM instance
-glob llm = Model(model_name="gpt-4.1");
+glob llm = Model(model_name="gpt-4.1", verbose=True);
 
 class StockAnalysis {
     has fundamentals: dict = {};
@@ -28,7 +28,7 @@ Return your analysis in a structured format with sections:
 - sentiment
 - summary
 """
-def analyze_stock(knowledge_base: dict) -> StockAnalysis by llm();
+def analyze_stock(context: list) -> StockAnalysis by llm();
 
 # Enum for recommendation types
 enum Recommendation {
@@ -67,4 +67,4 @@ Provide a clear investment recommendation:
 
 Format as JSON with these exact keys.
 """
-def provide_recommendation() -> InvestmentRecommendation by llm();
+def provide_recommendation(context: list) -> InvestmentRecommendation by llm();

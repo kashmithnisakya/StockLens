@@ -1,4 +1,4 @@
-import from ai_core { research_stock, analyze_stock, provide_recommendation }
+import from ai_core { analyze_stock, provide_recommendation }
 import from jac_cloud.jaseci.utils.logger { logger }
 import from serper_client { serper_client }
 
@@ -28,7 +28,6 @@ node master_agent {
     has depth: AnalysisDepth = AnalysisDepth.QUICK;
     has sequence: list = [];
     has max_executions: int = 10;
-    has knowledge_base: dict = [];
     has final_analysis: dict = {};
 }
 
@@ -39,7 +38,7 @@ node market_researcher {
     has status: Status = Status.PENDING;
     has ticker: str = "";
 
-    def execute() {
+    def execute(walker_obj: any) {
         logger.debug(f"nodes | market_researcher | execute | Starting research for {self.ticker}");
 
         # Fetch news using SERPER
@@ -79,9 +78,8 @@ node stock_analyst {
     has analysis_result: dict = {};
     has status: Status = Status.PENDING;
 
-    def execute() {
-        logger.debug("Not implemented yet");
-        return "plan";
+    def execute(walker_obj: any) {
+        return analyze_stock(context=walker_obj.knowledge_base);
     }
 }
 
@@ -93,33 +91,10 @@ node investment_strategist {
     has reasoning: str = "";
     has status: Status = Status.PENDING;
 
-    def execute() {
-        logger.debug("Not implemented yet");
-        return "strategy_plan";
+    def execute(walker_obj: any) {
+        return provide_recommendation(context=walker_obj.knowledge_base);
     }
 }
-
-# # Result node to store final output
-# node analysis_result {
-#     has ticker: str;
-#     has timestamp: str;
-#     has recommendation: str;
-#     has confidence_score: float = 0.0;
-#     has analysis_summary: str = "";
-#     has key_metrics: dict = {};
-#     has risks: list = [];
-#     has opportunities: list = [];
-# }
-
-# # Task node for individual tasks
-# node task {
-#     has task_name: str;
-#     has description: str;
-#     has assigned_to: str;
-#     has result: str = "";
-#     has status: str = "pending";
-#     has priority: int = 1;
-# }
 
 glob agents = {
     AgentRole.MARKET_RESEARCHER.value: market_researcher,

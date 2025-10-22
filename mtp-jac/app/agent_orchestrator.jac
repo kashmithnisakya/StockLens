@@ -63,8 +63,9 @@ walker init_analysis {
 
 walker orchestrator {
     has ticker: str;
-    has result: Dict[str, Any] = {};
     has depth: AnalysisDepth = AnalysisDepth.QUICK;
+    has result: Dict[str, Any] = {};
+    has knowledge_base: list = [];
 
     class __specs__ {
         has tags: list = ["stock"];
@@ -88,13 +89,13 @@ walker orchestrator {
         for agent_name in here.sequence {
             logger.debug(f"agent_orchestrator | orchestrate_analysis | executing agent: {agent_name}");
             agent_node = [-->] (`?agents[agent_name]);
-            agent_result = agent_node[0].execute();
-            here.knowledge_base.append({
+            agent_result = agent_node[0].execute(walker_obj=self);
+            self.knowledge_base.append({
                 "agent": agent_name,
                 "result": agent_result,
                 "timestamp": datetime.now().isoformat()
             });
         }
-        logger.debug(f"knowledge_base: {here.knowledge_base}");
+        logger.debug(f"knowledge_base: {self.knowledge_base}");
     }
 }
