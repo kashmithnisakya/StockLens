@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,13 @@ import { AnalysisDepth } from "@/types/api";
 import { useToast } from "@/hooks/use-toast";
 
 const AnalyticsContent = () => {
+  // Prevent body scroll
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
   const [ticker, setTicker] = useState("");
   const [depth, setDepth] = useState<AnalysisDepth>(AnalysisDepth.QUICK);
   const { recommendation, ticker: analyzedTicker, loading, analyzeStock } = useStockAnalysisContext();
@@ -49,15 +56,15 @@ const AnalyticsContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-primary">
+    <div className="h-screen bg-gradient-primary flex flex-col overflow-hidden">
       <Header />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="container mx-auto px-4 py-6 flex-1 min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
           {/* Left side - 2/3 width - Stock Analysis */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Search Section */}
-            <Card className="bg-card/80 backdrop-blur-glass border-border/50 p-6">
+          <div className="lg:col-span-2 flex flex-col h-full gap-6 min-h-0">
+            {/* Search Section - Pinned at top */}
+            <Card className="bg-card/80 backdrop-blur-glass border-border/50 p-6 flex-shrink-0">
               <div className="space-y-4">
                 <div>
                   <h2 className="text-2xl font-bold mb-2">Stock Analysis</h2>
@@ -110,32 +117,35 @@ const AnalyticsContent = () => {
               </div>
             </Card>
 
-            {/* Analysis Results */}
-            {recommendation && analyzedTicker && (
-              <StockAnalysisResults recommendation={recommendation} ticker={analyzedTicker} />
-            )}
+            {/* Scrollable Results Section */}
+            <div className="flex-1 overflow-hidden min-h-0">
+              {/* Analysis Results */}
+              {recommendation && analyzedTicker && (
+                <StockAnalysisResults recommendation={recommendation} ticker={analyzedTicker} />
+              )}
 
-            {/* Empty State */}
-            {!recommendation && (
-              <Card className="bg-card/60 backdrop-blur-glass border-border/50 p-12">
-                <div className="text-center space-y-3">
-                  <div className="flex justify-center">
-                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Search className="h-8 w-8 text-primary" />
+              {/* Empty State */}
+              {!recommendation && (
+                <Card className="bg-card/60 backdrop-blur-glass border-border/50 p-12">
+                  <div className="text-center space-y-3">
+                    <div className="flex justify-center">
+                      <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Search className="h-8 w-8 text-primary" />
+                      </div>
                     </div>
+                    <h3 className="text-xl font-semibold">No Analysis Yet</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      Enter a stock ticker above and click "Analyze" to get AI-powered investment
+                      recommendations powered by multi-agent analysis.
+                    </p>
                   </div>
-                  <h3 className="text-xl font-semibold">No Analysis Yet</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    Enter a stock ticker above and click "Analyze" to get AI-powered investment
-                    recommendations powered by multi-agent analysis.
-                  </p>
-                </div>
-              </Card>
-            )}
+                </Card>
+              )}
+            </div>
           </div>
 
           {/* Right side - 1/3 width - AI Chat */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 h-full">
             <AIChat />
           </div>
         </div>

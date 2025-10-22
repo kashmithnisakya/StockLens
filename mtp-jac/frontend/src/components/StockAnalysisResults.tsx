@@ -36,8 +36,8 @@ export const StockAnalysisResults = ({ recommendation, ticker }: StockAnalysisRe
   };
 
   return (
-    <Card className="bg-card/80 backdrop-blur-glass border-border/50">
-      <CardHeader>
+    <Card className="bg-card/80 backdrop-blur-glass border-border/50 flex flex-col max-h-full">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center justify-between">
           <span>Investment Analysis: {ticker}</span>
           <Badge variant="secondary" className="text-xs">
@@ -45,7 +45,7 @@ export const StockAnalysisResults = ({ recommendation, ticker }: StockAnalysisRe
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 overflow-y-auto custom-scrollbar flex-1">
         {/* Recommendation Badge */}
         <div className="flex items-center justify-center">
           <div
