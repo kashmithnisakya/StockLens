@@ -13,20 +13,20 @@ export const HeroSection = () => {
     <section className="relative overflow-hidden border-b border-border/50">
       {/* Gradient glow background */}
       <div className="absolute inset-0 bg-gradient-glow opacity-50" />
-      
+
       <div className="container relative mx-auto px-4 py-12">
         <div className="flex flex-col items-center text-center">
           <Badge variant="secondary" className="mb-4 px-4 py-1.5">
             <TrendingUp className="mr-2 h-3 w-3" />
             Powered by Multi-AI Agents
           </Badge>
-          
+
           <h2 className="mb-4 text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
             Real-Time Stock Market Intelligence
           </h2>
-          
+
           <p className="mb-8 max-w-2xl text-lg text-muted-foreground">
-            Leverage advanced AI agents to analyze market trends, predict movements, 
+            Leverage advanced AI agents to analyze market trends, predict movements,
             and make data-driven investment decisions with confidence.
           </p>
 
