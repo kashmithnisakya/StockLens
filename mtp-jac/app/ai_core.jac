@@ -1,6 +1,6 @@
 import from byllm { Model }
 
-# Global LLM instance
+
 glob llm = Model(model_name="gpt-4.1", verbose=True);
 
 class StockAnalysis {
