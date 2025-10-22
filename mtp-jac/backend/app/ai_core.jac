@@ -1,12 +1,13 @@
 import from byllm { Model }
+import from typing { Dict, List }
 
 
-glob llm = Model(model_name="gpt-4.1", verbose=True);
+glob llm = Model(model_name="gpt-4.1");
 
 obj StockAnalysis {
-    has fundamentals: dict = {};
-    has technicals: dict = {};
-    has sentiment: dict = {};
+    has fundamentals: Dict[str, str] = {};
+    has technicals: Dict[str, str] = {};
+    has sentiment: Dict[str, str] = {};
     has summary: str = "";
 }
 
@@ -28,7 +29,7 @@ Return your analysis in a structured format with sections:
 - sentiment
 - summary
 """
-def analyze_stock(context: list) -> StockAnalysis by llm();
+def analyze_stock(context: List[Dict[str, any]]) -> StockAnalysis by llm();
 
 # Enum for recommendation types
 enum Recommendation {
@@ -41,8 +42,8 @@ obj InvestmentRecommendation {
     has recommendation: Recommendation;
     has confidence_score: float = 0.0;
     has reasoning: str = "";
-    has key_risks: list = [];
-    has key_opportunities: list = [];
+    has key_risks: List[str] = [];
+    has key_opportunities: List[str] = [];
     has target_price: float = 0.0;
     has stop_loss: float = 0.0;
 }
@@ -67,4 +68,4 @@ Provide a clear investment recommendation:
 
 Format as JSON with these exact keys.
 """
-def provide_recommendation(context: list) -> InvestmentRecommendation by llm();
+def provide_recommendation(context: List[Dict[str, any]]) -> InvestmentRecommendation by llm();

@@ -1,6 +1,7 @@
 import from ai_core { analyze_stock, provide_recommendation }
 import from jac_cloud.jaseci.utils.logger { logger }
 import from serper_client { serper_client }
+import from typing { Any }
 
 
 enum AgentRole {
@@ -38,7 +39,7 @@ node market_researcher {
     has status: Status = Status.PENDING;
     has ticker: str = "";
 
-    def execute(walker_obj: any) {
+    def execute(walker_obj: Any) {
         logger.debug(f"nodes | market_researcher | execute | Starting research for {self.ticker}");
 
         # Fetch news using SERPER
@@ -78,7 +79,9 @@ node stock_analyst {
     has analysis_result: dict = {};
     has status: Status = Status.PENDING;
 
-    def execute(walker_obj: any) {
+    def execute(walker_obj: Any) {
+        logger.debug(f"nodes | stock_analyst | execute | Starting analysis for {walker_obj.ticker}");
+
         return analyze_stock(context=walker_obj.knowledge_base);
     }
 }
@@ -91,7 +94,9 @@ node investment_strategist {
     has reasoning: str = "";
     has status: Status = Status.PENDING;
 
-    def execute(walker_obj: any) {
+    def execute(walker_obj: Any) {
+        logger.debug(f"nodes | investment_strategist | execute | Starting recommendation for {walker_obj.ticker}");
+
         return provide_recommendation(context=walker_obj.knowledge_base);
     }
 }

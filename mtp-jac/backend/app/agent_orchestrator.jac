@@ -90,12 +90,13 @@ walker orchestrator {
             logger.debug(f"agent_orchestrator | orchestrate_analysis | executing agent: {agent_name}");
             agent_node = [-->] (`?agents[agent_name]);
             agent_result = agent_node[0].execute(walker_obj=self);
+            logger.debug(f"agent_orchestrator | orchestrate_analysis | agent {agent_name} returned: {agent_result}");
             self.knowledge_base.append({
                 "agent": agent_name,
                 "result": agent_result,
                 "timestamp": datetime.now().isoformat()
             });
         }
-        logger.debug(f"knowledge_base: {self.knowledge_base}");
+        report self.knowledge_base[-1]["result"];
     }
 }
