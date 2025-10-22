@@ -3,7 +3,7 @@ import from byllm { Model }
 
 glob llm = Model(model_name="gpt-4.1", verbose=True);
 
-class StockAnalysis {
+obj StockAnalysis {
     has fundamentals: dict = {};
     has technicals: dict = {};
     has sentiment: dict = {};
@@ -37,7 +37,7 @@ enum Recommendation {
     SELL = "SELL"
 }
 
-class InvestmentRecommendation {
+obj InvestmentRecommendation {
     has recommendation: Recommendation;
     has confidence_score: float = 0.0;
     has reasoning: str = "";
