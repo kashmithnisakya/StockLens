@@ -208,6 +208,83 @@ obj SerperClient {
             };
         }
     }
+
+    def custom_search(query: str, num_results: int = 15, search_type: str = "search") -> Dict[str, Any] {
+        if not self.config.api_key {
+            logger.error("serper_client | custom_search | SERPER API key not configured");
+            return {
+                "status": "error",
+                "message": "SERPER API key not configured",
+                "results": []
+            };
+        }
+
+        try {
+            endpoint = self.config.news_endpoint if search_type == "news" else self.config.search_endpoint;
+            url = f"{self.config.base_url}{endpoint}";
+            headers = {
+                "X-API-KEY": self.config.api_key,
+                "Content-Type": "application/json"
+            };
+            payload = {
+                "q": query,
+                "num": num_results
+            };
+
+            if search_type == "news" {
+                payload["tbs"] = "qdr:m";  # Last month for deeper research
+            }
+
+            logger.debug(f"serper_client | custom_search | Performing custom {search_type} search: {query}");
+            response = post(url, json=payload, headers=headers, timeout=10);
+
+            if response.status_code == 200 {
+                data = response.json();
+                results = [];
+
+                if search_type == "news" and "news" in data {
+                    for item in data["news"] {
+                        results.append({
+                            "title": item.get("title", ""),
+                            "link": item.get("link", ""),
+                            "snippet": item.get("snippet", ""),
+                            "date": item.get("date", ""),
+                            "source": item.get("source", "")
+                        });
+                    }
+                } elif "organic" in data {
+                    for item in data["organic"] {
+                        results.append({
+                            "title": item.get("title", ""),
+                            "link": item.get("link", ""),
+                            "snippet": item.get("snippet", "")
+                        });
+                    }
+                }
+
+                return {
+                    "status": "success",
+                    "results": results,
+                    "count": len(results),
+                    "search_type": search_type
+                };
+            } else {
+                logger.error(f"serper_client | custom_search | API error: {response.status_code}");
+                return {
+                    "status": "error",
+                    "message": f"API returned status code {response.status_code}",
+                    "results": []
+                };
+            }
+        } except Exception as e {
+            logger.error(f"serper_client | custom_search | Exception: {str(e)}");
+            return {
+                "status": "error",
+                "message": str(e),
+                "results": []
+            };
+        }
+    }
 }
 
 glob serper_client = SerperClient(

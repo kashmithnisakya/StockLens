@@ -72,11 +72,26 @@ enum AgentRole {
 }
 
 """
-You are an expert AI agent orchestrator. 
-Based on the current sequence of agents executed, generate an optimized plan for the next set of agents to execute for a comprehensive stock analysis.
-sequence should always end with INVESTMENT_STRATEGIST.
-- market_researcher: Gathers market trends, competitor info, and news.
-- stock_analyst: Performs in-depth analysis of the stock's performance.
-- investment_strategist: Develops investment strategies based on the analysis.
+You are an expert AI agent orchestrator for comprehensive stock analysis.
+
+AGENT DESCRIPTIONS:
+- market_researcher: Gathers market trends, competitor info, news, and market data. Can perform deeper research with custom search queries when needed.
+- stock_analyst: Performs in-depth analysis of stock performance, fundamentals, technicals, and sentiment. Can request additional research if data is insufficient.
+- investment_strategist: Develops investment strategies and provides final recommendations based on all available analysis.
+
+PLANNING RULES:
+1. Sequence MUST always end with INVESTMENT_STRATEGIST
+2. If redo_research is True, prioritize market_researcher with enhanced search capabilities to gather missing information
+3. After redo_research, always run stock_analyst again to analyze the new data
+4. Consider the current_sequence to avoid unnecessary repetition
+5. Optimize for comprehensive analysis while minimizing redundant agent executions
+6. Typical flow: market_researcher -> stock_analyst -> [if insufficient: market_researcher -> stock_analyst] -> investment_strategist
+7. At least one market_researcher and stock_analyst must be included in the sequence
+
+PARAMETERS:
+- current_sequence: List of agents already executed or planned
+- redo_research: Boolean indicating if Stock Analyst requested additional research
+
+Generate an optimized sequence that ensures thorough analysis while being efficient.
 """
-def generate_plan(current_sequence: List[str]) -> List[AgentRole] by llm();
+def generate_plan(current_sequence: List[str], redo_research: bool = False) -> List[AgentRole] by llm();

@@ -36,9 +36,7 @@ walker init_analysis {
         # Create agent nodes
         if not [-->](`?market_researcher) {
             logger.debug("agent_orchestrator | init_analysis | Creating Market Researcher agent node");
-            here ++> market_researcher(
-                ticker=self.ticker
-            );
+            here ++> market_researcher();
         } 
         if not [-->](`?stock_analyst) {
             logger.debug("agent_orchestrator | init_analysis | Creating Stock Analyst agent node");
@@ -88,42 +86,78 @@ walker orchestrator {
         logger.debug(f"agent_orchestrator | orchestrate_analysis | running orchestration for {self.ticker}");
         agent_queue = here.sequence.copy();
         execution_sequence = [];
+        redo_research_mode = False;
+        redo_count = 0;
+
         while len(agent_queue) > 0 and here.max_executions > len(execution_sequence) {
             current_agent = agent_queue.pop(0);
-            logger.debug(f"agent_orchestrator | orchestrate_analysis | executing agent: {current_agent}");
+            logger.debug(f"agent_orchestrator | orchestrate_analysis | executing agent: {current_agent} (redo_mode: {redo_research_mode})");
             execution_sequence.append(current_agent);
+
+            # Get agent node
             agent_node = [-->] (`?agents[current_agent]);
-            agent_result = agent_node[0].execute(walker_obj=self);
-            logger.debug(f"agent_orchestrator | orchestrate_analysis | agent {current_agent} returned: {agent_result}");
+
+            # Execute agent with appropriate parameters
+            if current_agent == AgentRole.MARKET_RESEARCHER.value {
+                # Pass redo_research flag to market_researcher
+                agent_result = agent_node[0].execute(walker_obj=self, redo_research=redo_research_mode);
+                logger.debug(f"agent_orchestrator | orchestrate_analysis | Market Researcher executed with redo_research={redo_research_mode}");
+                # Reset redo_research_mode after market researcher execution
+                redo_research_mode = False;
+            } else {
+                agent_result = agent_node[0].execute(walker_obj=self);
+            }
+
+            logger.debug(f"agent_orchestrator | orchestrate_analysis | agent {current_agent} completed");
+            logger.debug(f"agent_orchestrator | orchestrate_analysis | agent result: {agent_result}");
             self.knowledge_base.append({
                 "agent": current_agent,
                 "result": agent_result,
                 "timestamp": datetime.now().isoformat()
             });
 
+            # Check if Stock Analyst recommends redoing research
             if current_agent == AgentRole.STOCK_ANALYST.value and self.depth.value == AnalysisDepth.COMPREHENSIVE.value {
                 redo_research = agent_result.redo_research;
-                if redo_research {
-                    logger.debug(f"agent_orchestrator | orchestrate_analysis | redoing research as per Stock Analyst recommendation");
-                    updated_sequence = here.execute(walker_obj=self);
-                    # update agent_queue to according to new queue
+                if redo_research and redo_count < 2 {
+                    redo_count += 1;
+                    logger.debug(f"agent_orchestrator | orchestrate_analysis | Stock Analyst requested redo_research (attempt {redo_count}/2)");
+                    logger.debug(f"agent_orchestrator | orchestrate_analysis | Generating updated agent sequence");
+
+                    # Set redo_research mode for next market_researcher execution
+                    redo_research_mode = True;
+
+                    # Generate updated sequence with context
+                    updated_sequence = here.execute(walker_obj=self, redo_research=True);
+
+                    # Update agent_queue with new sequence
                     agent_queue = updated_sequence.copy();
-                    logger.debug(f"agent_orchestrator | orchestrate_analysis | updated agent queue: {agent_queue}");
+                    logger.debug(f"agent_orchestrator | orchestrate_analysis | Updated agent queue: {agent_queue}");
+                } elif redo_research and redo_count >= 2 {
+                    logger.warning(f"agent_orchestrator | orchestrate_analysis | Maximum redo_research attempts reached (2), continuing with current data");
                 } else {
-                    logger.debug(f"agent_orchestrator | orchestrate_analysis | no need to redo research");
+                    logger.debug(f"agent_orchestrator | orchestrate_analysis | Analysis sufficient, no redo needed");
                 }
             }
         }
+
+        # Safety check: ensure we have results
         if len(execution_sequence) == here.max_executions {
-            logger.warning(f"agent_orchestrator | orchestrate_analysis | reached maximum execution limit of {self.max_executions} agents");
-            agent_result = investment_strategist.execute(walker_obj=self);
-            self.knowledge_base.append({
-                "agent": AgentRole.INVESTMENT_STRATEGIST.value,
-                "result": agent_result,
-                "timestamp": datetime.now().isoformat()
-            });
+            logger.warning(f"agent_orchestrator | orchestrate_analysis | Reached maximum execution limit of {here.max_executions} agents");
+            # Force execution of investment strategist if not in sequence
+            if AgentRole.INVESTMENT_STRATEGIST.value not in execution_sequence {
+                logger.debug(f"agent_orchestrator | orchestrate_analysis | Forcing Investment Strategist execution");
+                strategist_node = [-->] (`?agents[AgentRole.INVESTMENT_STRATEGIST.value]);
+                agent_result = strategist_node[0].execute(walker_obj=self);
+                self.knowledge_base.append({
+                    "agent": AgentRole.INVESTMENT_STRATEGIST.value,
+                    "result": agent_result,
+                    "timestamp": datetime.now().isoformat()
+                });
+            }
         }
 
+        logger.debug(f"agent_orchestrator | orchestrate_analysis | Orchestration completed. Total agents executed: {len(execution_sequence)}");
         report self.knowledge_base[-1]["result"];
     }
 }
