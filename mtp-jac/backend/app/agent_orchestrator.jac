@@ -2,10 +2,11 @@ import from datetime { datetime }
 import from typing { Dict, List, Any }
 import from nodes {
     master_agent, stock_analyst, investment_strategist,
-    market_researcher, Status, AnalysisDepth, agents, AgentRole
+    market_researcher, Status, AnalysisDepth, agents
 }
 import from fastapi { HTTPException, status }
 import from jac_cloud.jaseci.utils.logger { logger }
+import from ai_core { AgentRole }
 
 
 # Walker to initialize the analysis system
@@ -53,10 +54,10 @@ walker init_analysis {
             here.sequence = [AgentRole.MARKET_RESEARCHER.value, AgentRole.STOCK_ANALYST.value, AgentRole.INVESTMENT_STRATEGIST.value];
         } elif here.depth.value == AnalysisDepth.STANDARD.value {
             logger.debug("agent_orchestrator | init_analysis | Standard analysis selected");
-            logger.debug("Not implemented yet");
+            logger.debug("Not implemented yet(visit_by is not ready yet)");
         } else {
             logger.debug("agent_orchestrator | init_analysis | Comprehensive analysis selected");
-            logger.debug("Not implemented yet");
+            here.sequence = here.execute(walker_obj=self);
         }
     }
 }
@@ -85,18 +86,44 @@ walker orchestrator {
 
     can run_orchestration with master_agent entry {
         logger.debug(f"agent_orchestrator | orchestrate_analysis | running orchestration for {self.ticker}");
-
-        for agent_name in here.sequence {
-            logger.debug(f"agent_orchestrator | orchestrate_analysis | executing agent: {agent_name}");
-            agent_node = [-->] (`?agents[agent_name]);
+        agent_queue = here.sequence.copy();
+        execution_sequence = [];
+        while len(agent_queue) > 0 and here.max_executions > len(execution_sequence) {
+            current_agent = agent_queue.pop(0);
+            logger.debug(f"agent_orchestrator | orchestrate_analysis | executing agent: {current_agent}");
+            execution_sequence.append(current_agent);
+            agent_node = [-->] (`?agents[current_agent]);
             agent_result = agent_node[0].execute(walker_obj=self);
-            logger.debug(f"agent_orchestrator | orchestrate_analysis | agent {agent_name} returned: {agent_result}");
+            logger.debug(f"agent_orchestrator | orchestrate_analysis | agent {current_agent} returned: {agent_result}");
             self.knowledge_base.append({
-                "agent": agent_name,
+                "agent": current_agent,
+                "result": agent_result,
+                "timestamp": datetime.now().isoformat()
+            });
+
+            if current_agent == AgentRole.STOCK_ANALYST.value and self.depth.value == AnalysisDepth.COMPREHENSIVE.value {
+                redo_research = agent_result.redo_research;
+                if redo_research {
+                    logger.debug(f"agent_orchestrator | orchestrate_analysis | redoing research as per Stock Analyst recommendation");
+                    updated_sequence = here.execute(walker_obj=self);
+                    # update agent_queue to according to new queue
+                    agent_queue = updated_sequence.copy();
+                    logger.debug(f"agent_orchestrator | orchestrate_analysis | updated agent queue: {agent_queue}");
+                } else {
+                    logger.debug(f"agent_orchestrator | orchestrate_analysis | no need to redo research");
+                }
+            }
+        }
+        if len(execution_sequence) == here.max_executions {
+            logger.warning(f"agent_orchestrator | orchestrate_analysis | reached maximum execution limit of {self.max_executions} agents");
+            agent_result = investment_strategist.execute(walker_obj=self);
+            self.knowledge_base.append({
+                "agent": AgentRole.INVESTMENT_STRATEGIST.value,
                 "result": agent_result,
                 "timestamp": datetime.now().isoformat()
             });
         }
+
         report self.knowledge_base[-1]["result"];
     }
 }

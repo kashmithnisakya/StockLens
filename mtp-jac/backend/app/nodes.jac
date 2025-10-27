@@ -1,14 +1,8 @@
-import from ai_core { analyze_stock, provide_recommendation }
+import from ai_core { analyze_stock, provide_recommendation, generate_plan, AgentRole }
 import from jac_cloud.jaseci.utils.logger { logger }
 import from serper_client { serper_client }
 import from typing { Any }
 
-
-enum AgentRole {
-    STOCK_ANALYST = "stock_analyst",
-    INVESTMENT_STRATEGIST = "investment_strategist",
-    MARKET_RESEARCHER = "market_researcher"
-}
 
 enum Status {
     PENDING = "pending",
@@ -30,6 +24,15 @@ node master_agent {
     has sequence: list = [];
     has max_executions: int = 10;
     has final_analysis: dict = {};
+
+
+    def execute(walker_obj: Any) {
+        logger.debug(f"nodes | master_agent | execute | Starting analysis for {self.ticker}");  
+        generated_sequence = generate_plan(current_sequence=self.sequence);
+        converted_sequence = [agent.value for agent in generated_sequence];
+        logger.debug(f"nodes | master_agent | execute | Generated agent sequence: {converted_sequence}");
+        return converted_sequence;
+    }
 }
 
 node market_researcher {
