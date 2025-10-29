@@ -44,7 +44,7 @@ export const AIChat = () => {
   };
 
   return (
-    <Card className="flex h-[600px] flex-col bg-card/60 backdrop-blur-glass border-border/50">
+    <Card className="flex h-full flex-col bg-card/60 backdrop-blur-glass border-border/50">
       <div className="border-b border-border/50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -62,7 +62,7 @@ export const AIChat = () => {
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4 custom-scrollbar">
         <div className="space-y-4">
           {messages.map((message, index) => (
             <div
@@ -98,7 +98,7 @@ export const AIChat = () => {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSend()}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Ask about stocks, trends, or analysis..."
             className="bg-secondary border-border/50"
           />
