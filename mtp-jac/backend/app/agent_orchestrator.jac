@@ -50,9 +50,6 @@ walker init_analysis {
         if here.depth.value == AnalysisDepth.QUICK.value {
             logger.debug("agent_orchestrator | init_analysis | Quick analysis selected");
             here.sequence = [AgentRole.MARKET_RESEARCHER.value, AgentRole.STOCK_ANALYST.value, AgentRole.INVESTMENT_STRATEGIST.value];
-        } elif here.depth.value == AnalysisDepth.STANDARD.value {
-            logger.debug("agent_orchestrator | init_analysis | Standard analysis selected");
-            logger.debug("Not implemented yet(visit_by is not ready yet)");
         } else {
             logger.debug("agent_orchestrator | init_analysis | Comprehensive analysis selected");
             here.sequence = here.execute(walker_obj=self);

@@ -12,23 +12,13 @@ obj StockAnalysis {
     has redo_research: bool = False;
 }
 
-"""
-You are an expert Stock Analyst.:
+sem StockAnalysis.fundamentals = "Key fundamental metrics such as P/E ratio, revenue, profitability.";
+sem StockAnalysis.technicals = "Key technical indicators such as price trends, support and resistance";
+sem StockAnalysis.sentiment = "Market sentiment analysis including news sentiment and social media trends.";
+sem StockAnalysis.summary = "A concise summary of the overall stock analysis.";
+sem StockAnalysis.redo_research = "If given data is insufficient for a comprehensive analysis, set to true.";
 
-Provide a detailed analysis covering:
-1. Fundamental Analysis (P/E ratio, revenue, profitability)
-2. Technical Analysis (price trends, support/resistance)
-3. Sentiment Analysis (market sentiment, news sentiment)
-
-if you think details is not sufficient, set redo_research to true.
-
-Return your analysis in a structured format with sections:
-- fundamentals
-- technicals
-- sentiment
-- summary
-- redo_research (true/false)
-"""
+"""Analyze stock data"""
 def analyze_stock(context: List[Dict[str, any]]) -> StockAnalysis by llm();
 
 # Enum for recommendation types
@@ -48,21 +38,15 @@ obj InvestmentRecommendation {
     has stop_loss: float = 0.0;
 }
 
-"""
-You are a Senior Investment Strategist. Based on the following analysis for {self.ticker}:
+sem InvestmentRecommendation.recommendation = "Investment recommendation: BUY, HOLD, or SELL.";
+sem InvestmentRecommendation.confidence_score = "Confidence score of the recommendation from 0 to 100";
+sem InvestmentRecommendation.reasoning = "Detailed reasoning behind the recommendation.";
+sem InvestmentRecommendation.key_risks = "List of key risks associated with the investment.";
+sem InvestmentRecommendation.key_opportunities = "List of key opportunities associated with the investment.";
+sem InvestmentRecommendation.target_price = "Target price for the stock if the recommendation is BUY.";
+sem InvestmentRecommendation.stop_loss = "Stop loss price for the stock if the recommendation is BUY.";
 
-
-Provide a clear investment recommendation:
-1. Recommendation: BUY, HOLD, or SELL
-2. Confidence Score: 0-100
-3. Reasoning: Detailed explanation
-4. Key Risks: List of potential risks
-5. Key Opportunities: List of potential opportunities
-6. Target Price (if BUY)
-7. Stop Loss (if BUY)
-
-Format as JSON with these exact keys.
-"""
+"""Provide investment recommendation based on stock analysis"""
 def provide_recommendation(context: List[Dict[str, any]]) -> InvestmentRecommendation by llm();
 
 enum AgentRole {
@@ -72,13 +56,6 @@ enum AgentRole {
 }
 
 """
-You are an expert AI agent orchestrator for comprehensive stock analysis.
-
-AGENT DESCRIPTIONS:
-- market_researcher: Gathers market trends, competitor info, news, and market data. Can perform deeper research with custom search queries when needed.
-- stock_analyst: Performs in-depth analysis of stock performance, fundamentals, technicals, and sentiment. Can request additional research if data is insufficient.
-- investment_strategist: Develops investment strategies and provides final recommendations based on all available analysis.
-
 PLANNING RULES:
 1. Sequence MUST always end with INVESTMENT_STRATEGIST
 2. If redo_research is True, prioritize market_researcher with enhanced search capabilities to gather missing information
@@ -87,11 +64,5 @@ PLANNING RULES:
 5. Optimize for comprehensive analysis while minimizing redundant agent executions
 6. Typical flow: market_researcher -> stock_analyst -> [if insufficient: market_researcher -> stock_analyst] -> investment_strategist
 7. At least one market_researcher and stock_analyst must be included in the sequence
-
-PARAMETERS:
-- current_sequence: List of agents already executed or planned
-- redo_research: Boolean indicating if Stock Analyst requested additional research
-
-Generate an optimized sequence that ensures thorough analysis while being efficient.
 """
 def generate_plan(current_sequence: List[str], redo_research: bool = False) -> List[AgentRole] by llm();
