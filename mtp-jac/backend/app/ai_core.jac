@@ -23,9 +23,9 @@ def analyze_stock(context: List[Dict[str, any]]) -> StockAnalysis by llm();
 
 # Enum for recommendation types
 enum Recommendation {
-    BUY = "BUY",
-    HOLD = "HOLD",
-    SELL = "SELL"
+    BUY,
+    HOLD,
+    SELL,
 }
 
 obj InvestmentRecommendation {
