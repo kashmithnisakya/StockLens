@@ -13,7 +13,6 @@ enum Status {
 
 enum AnalysisDepth {
     QUICK = "quick",
-    STANDARD = "standard",
     COMPREHENSIVE = "comprehensive"
 }
 
