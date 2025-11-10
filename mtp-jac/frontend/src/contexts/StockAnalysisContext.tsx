@@ -4,6 +4,7 @@ import { stockAnalysisService } from "@/services/stock-analysis.service";
 
 interface StockAnalysisContextType {
   recommendation: InvestmentRecommendation | null;
+  resultId: string | null;
   ticker: string;
   loading: boolean;
   error: string | null;
@@ -17,6 +18,7 @@ const StockAnalysisContext = createContext<StockAnalysisContextType | undefined>
 
 export function StockAnalysisProvider({ children }: { children: ReactNode }) {
   const [recommendation, setRecommendation] = useState<InvestmentRecommendation | null>(null);
+  const [resultId, setResultId] = useState<string | null>(null);
   const [ticker, setTicker] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +32,10 @@ export function StockAnalysisProvider({ children }: { children: ReactNode }) {
       const response = await stockAnalysisService.getStockAnalysis(tickerSymbol, depth);
 
       if (response.reports && response.reports.length > 0) {
-        setRecommendation(response.reports[0]);
+        // Extract final_recommendation and result_id from the first report
+        const report = response.reports[0];
+        setRecommendation(report.final_recommendation);
+        setResultId(report.result_id);
       } else {
         throw new Error("No analysis data received");
       }
@@ -38,6 +43,7 @@ export function StockAnalysisProvider({ children }: { children: ReactNode }) {
       const errorMessage = err.message || "Failed to analyze stock";
       setError(errorMessage);
       setRecommendation(null);
+      setResultId(null);
       throw err;
     } finally {
       setLoading(false);
@@ -46,6 +52,7 @@ export function StockAnalysisProvider({ children }: { children: ReactNode }) {
 
   const reset = () => {
     setRecommendation(null);
+    setResultId(null);
     setTicker("");
     setError(null);
   };
@@ -54,6 +61,7 @@ export function StockAnalysisProvider({ children }: { children: ReactNode }) {
     <StockAnalysisContext.Provider
       value={{
         recommendation,
+        resultId,
         ticker,
         loading,
         error,

@@ -2,11 +2,13 @@ import from datetime { datetime }
 import from typing { Dict, List, Any }
 import from nodes {
     master_agent, stock_analyst, investment_strategist,
-    market_researcher, Status, AnalysisDepth, agents
+    market_researcher, Status, AnalysisDepth, agents, analysis_result
 }
 import from fastapi { HTTPException, status }
 import from jac_cloud.jaseci.utils.logger { logger }
-import from ai_core { AgentRole }
+import from ai_core { AgentRole, should_use_search_tool, chat_with_context }
+import from serper_client { serper_client }
+import from datetime { datetime }
 
 
 # Walker to initialize the analysis system
@@ -155,6 +157,82 @@ walker orchestrator {
         }
 
         logger.debug(f"agent_orchestrator | orchestrate_analysis | Orchestration completed. Total agents executed: {len(execution_sequence)}");
-        report self.knowledge_base[-1]["result"];
+        result_node = here ++> analysis_result(ticker=self.ticker, final_recommendation=self.knowledge_base[-1]["result"]);
+        visit result_node;
+    }
+
+    can report_result with analysis_result entry {
+        logger.debug(f"agent_orchestrator | orchestrate_analysis | Reporting final result for {self.ticker}");
+        response = {
+            "result_id": here.result_id,
+            "ticker": here.ticker,
+            "final_recommendation": here.final_recommendation
+        };
+        report response;
+    }
+}
+
+walker chat{
+    has result_id: str;
+    has quary: str;
+
+    class __specs__ {
+        has tags: list = ["stock"];
+        has auth: bool = False;
+    }
+
+    can enter_master_agent with `root entry {
+        visit [-->](`?master_agent) else {
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Master agent node not found."
+            );
+        };
+    }
+
+    can enter_result with master_agent entry {
+        visit [-->](`?analysis_result)(?result_id==self.result_id) else {
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Analysis result with ID {self.result_id} not found."
+            );
+        };
+    }
+
+    can ask_question with analysis_result entry {
+        logger.debug(f"agent_orchestrator | chat | Received question: {self.quary} for result ID: {self.result_id}");
+        ai_response = should_use_search_tool(
+            current_data=here.final_recommendation,
+            user_query=self.quary
+        );
+
+        if ai_response.use_search_tool {
+            logger.debug(f"agent_orchestrator | chat | Search tool needed with query: {ai_response.search_query}");
+            search_results = serper_client.custom_search(ai_response.search_query, num_results=5);
+            here.search_data.append({
+                "query": ai_response.search_query,
+                "results": search_results,
+                "timestamp": datetime.now().isoformat()
+            });
+        }
+
+        assitent_response = chat_with_context(
+            user_query=self.quary,
+            search_data=here.search_data,
+            knowledge_base=here.final_recommendation
+        );
+
+        here.chat_history.append({
+            "question": self.quary,
+            "response": assitent_response,
+            "timestamp": datetime.now().isoformat()
+        });
+
+        response = {
+            "result_id": here.result_id,
+            "answer": assitent_response,
+            "chat_history": here.chat_history
+        };
+        report response;
     }
 }

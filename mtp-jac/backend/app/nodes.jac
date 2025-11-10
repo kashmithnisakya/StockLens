@@ -2,7 +2,7 @@ import from ai_core { analyze_stock, provide_recommendation, generate_plan, Agen
 import from jac_cloud.jaseci.utils.logger { logger }
 import from serper_client { serper_client }
 import from typing { Any }
-
+import from uuid { uuid4 }
 
 enum Status {
     PENDING = "pending",
@@ -170,3 +170,11 @@ glob agents = {
     AgentRole.STOCK_ANALYST.value: stock_analyst,
     AgentRole.INVESTMENT_STRATEGIST.value: investment_strategist
 };
+
+node analysis_result {
+    has result_id: str = uuid4().hex;
+    has ticker: str = "";
+    has final_recommendation: dict = {};
+    has search_data: list = [];
+    has chat_history: list = [];
+}

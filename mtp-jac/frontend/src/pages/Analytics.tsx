@@ -90,7 +90,6 @@ const AnalyticsContent = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={AnalysisDepth.QUICK}>Quick</SelectItem>
-                      <SelectItem value={AnalysisDepth.STANDARD}>Standard</SelectItem>
                       <SelectItem value={AnalysisDepth.COMPREHENSIVE}>
                         Comprehensive
                       </SelectItem>

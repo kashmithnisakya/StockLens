@@ -66,3 +66,12 @@ PLANNING RULES:
 7. At least one market_researcher and stock_analyst must be included in the sequence
 """
 def generate_plan(current_sequence: List[str], redo_research: bool = False) -> List[AgentRole] by llm();
+
+obj SearchDecision {
+    has search_query: str;
+    has use_search_tool: bool = False;
+}
+
+def should_use_search_tool(current_data: Dict[str, any], user_query: str) -> SearchDecision by llm();
+
+def chat_with_context(user_query: str, search_data: List[Dict[str, any]], knowledge_base: Dict[str, any]) -> str by llm();

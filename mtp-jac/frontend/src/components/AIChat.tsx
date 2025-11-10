@@ -1,46 +1,101 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Send, User } from "lucide-react";
+import { Bot, Send, User, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useStockAnalysisContext } from "@/contexts/StockAnalysisContext";
+import { chatService } from "@/services/chat.service";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
-export const AIChat = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "Hello! I'm your AI stock market analyst. Ask me anything about stocks, market trends, or investment strategies. I can help you analyze any ticker in real-time."
-    }
-  ]);
-  const [input, setInput] = useState("");
+const INITIAL_MESSAGE: Message = {
+  role: "assistant",
+  content: "Hello! I'm your AI stock market analyst. Ask me anything about stocks, market trends, or investment strategies. I can help you analyze any ticker in real-time."
+};
 
-  const handleSend = () => {
+export const AIChat = () => {
+  const { resultId, ticker } = useStockAnalysisContext();
+  const { toast } = useToast();
+  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Reset chat when a new stock is analyzed
+  useEffect(() => {
+    if (resultId && ticker) {
+      setMessages([
+        INITIAL_MESSAGE,
+        {
+          role: "assistant",
+          content: `I've completed the analysis for ${ticker}. Feel free to ask me any questions about this stock!`
+        }
+      ]);
+    }
+  }, [resultId, ticker]);
+
+  const handleSend = async () => {
     if (!input.trim()) return;
-    
+
+    // Check if we have a result_id from a stock analysis
+    if (!resultId) {
+      toast({
+        title: "Analysis Required",
+        description: "Please analyze a stock first before chatting about it.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Add user message
+    const userMessage = input;
     const newMessages: Message[] = [
       ...messages,
-      { role: "user", content: input }
+      { role: "user", content: userMessage }
     ];
     setMessages(newMessages);
     setInput("");
+    setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Call the chat API
+      const response = await chatService.sendMessage(resultId, userMessage);
+
+      if (response.reports && response.reports.length > 0) {
+        const aiResponse = response.reports[0].answer;
+        setMessages([
+          ...newMessages,
+          {
+            role: "assistant",
+            content: aiResponse
+          }
+        ]);
+      } else {
+        throw new Error("No response received");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Chat Error",
+        description: error.message || "Failed to get response from AI",
+        variant: "destructive",
+      });
+
+      // Add error message to chat
       setMessages([
         ...newMessages,
         {
           role: "assistant",
-          content: "I'm analyzing your query. Connect Lovable Cloud to enable real-time AI-powered stock analysis with multiple AI agents working together!"
+          content: "I'm sorry, I encountered an error processing your question. Please try again."
         }
       ]);
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -56,8 +111,15 @@ export const AIChat = () => {
               <p className="text-xs text-muted-foreground">Multi-Agent System</p>
             </div>
           </div>
-          <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">
-            Online
+          <Badge
+            variant="secondary"
+            className={
+              resultId
+                ? "bg-green-500/20 text-green-600"
+                : "bg-yellow-500/20 text-yellow-600"
+            }
+          >
+            {resultId ? "Ready" : "Waiting"}
           </Badge>
         </div>
       </div>
@@ -98,12 +160,22 @@ export const AIChat = () => {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Ask about stocks, trends, or analysis..."
+            onKeyDown={(e) => e.key === "Enter" && !isLoading && handleSend()}
+            placeholder={resultId ? "Ask about stocks, trends, or analysis..." : "Analyze a stock first..."}
             className="bg-secondary border-border/50"
+            disabled={isLoading || !resultId}
           />
-          <Button onClick={handleSend} variant="hero" size="icon">
-            <Send className="h-4 w-4" />
+          <Button
+            onClick={handleSend}
+            variant="hero"
+            size="icon"
+            disabled={isLoading || !resultId || !input.trim()}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
