@@ -24,13 +24,42 @@ export interface InvestmentRecommendation {
   };
 }
 
+export interface AnalysisReport {
+  result_id: string;
+  ticker: string;
+  final_recommendation: InvestmentRecommendation;
+}
+
 export interface OrchestratorResponse {
   status: number;
-  reports: InvestmentRecommendation[];
+  reports: AnalysisReport[];
 }
 
 export interface ApiError {
   message: string;
   status?: number;
   details?: any;
+}
+
+// Chat API Types
+export interface ChatMessage {
+  question: string;
+  response: string;
+  timestamp: string;
+}
+
+export interface ChatRequest {
+  result_id: string;
+  quary: string; // Note: API uses "quary" (typo in backend)
+}
+
+export interface ChatReport {
+  result_id: string;
+  answer: string;
+  chat_history: ChatMessage[];
+}
+
+export interface ChatResponse {
+  status: number;
+  reports: ChatReport[];
 }
